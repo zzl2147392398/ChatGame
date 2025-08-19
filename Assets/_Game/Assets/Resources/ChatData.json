@@ -1,0 +1,34 @@
+[
+  {
+    "chatId": 1,
+    "messages": [
+      { "sender": "npc", "text": "Hello", "timestamp": "2025-07-28T10:00:00", "isMyChat": false },
+      { "sender": "npc", "text": "Who are you, stupid stupid stupid stupid die at the beach hi", "timestamp": "2025-07-28T10:00:05", "isMyChat": false },
+      { "sender": "npc", "text": "What is your name", "timestamp": "2025-07-28T10:00:10", "isMyChat": false }
+    ],
+    "sche":20
+  },
+  {
+    "chatId": 2,
+    "messages": [
+      { "sender": "player", "text": "I come from China", "timestamp": "2025-07-28T10:01:00", "isMyChat": true }
+    ],
+    "sche":40
+  },
+  {
+    "chatId": 3,
+    "messages": [
+      { "sender": "player", "text": "My name is Xiaoming", "timestamp": "2025-07-28T10:01:10", "isMyChat": true }
+    ],
+    "sche":60
+  },
+  {
+    "chatId": 4,
+    "messages": [
+      { "sender": "npc", "text": "Hello", "timestamp": "2025-07-28T10:00:00", "isMyChat": false },
+      { "sender": "npc", "text": "Who are you, stupid stupid stupid stupid die at the beach hi", "timestamp": "2025-07-28T10:00:05", "isMyChat": false },
+      { "sender": "npc", "text": "What is your name", "timestamp": "2025-07-28T10:00:10", "isMyChat": false }
+    ],
+    "sche":60
+  }
+]

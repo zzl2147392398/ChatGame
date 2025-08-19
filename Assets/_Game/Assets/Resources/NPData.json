@@ -1,0 +1,24 @@
+[
+  {
+    "NPCID": 1,
+    "NPCName":"join",
+    "NPCImage":"",
+    "NPCHobby":"swimming",
+    "SliderDir":"right"
+  },
+  {
+    "NPCID": 2,
+    "NPCName":"join11",
+    "NPCImage":"",
+    "NPCHobby":"swimming1",
+    "SliderDir":"right"
+  },
+  {
+    "NPCID": 3,
+    "NPCName":"join11",
+    "NPCImage":"",
+    "NPCHobby":"swimming1",
+    "SliderDir":"right"
+  }
+  
+]
