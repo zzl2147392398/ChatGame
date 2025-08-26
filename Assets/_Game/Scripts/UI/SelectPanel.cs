@@ -1,4 +1,5 @@
 using DG.Tweening;
+using Luna.Unity.FacebookInstantGames;
 using System;
 using System.Collections.Generic;
 
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Newtonsoft.Json;
 
 public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
@@ -18,7 +20,6 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
     private RawImage Bgimage;
     private Button DownLoadBtn;
     public string PanelName = "SelectPanel"; // 面板名称
-    public UIManager uiManager; // UI管理器引用
     private Vector2 dragStartPos;
     private Vector2 dragEndPos;
     private Image scheImg; // 记录当前卡牌的文本
@@ -34,6 +35,7 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
     private GameObject GuideAnimation;
     private Dictionary<int, NpcConfig> chatInfoDic = new Dictionary<int, NpcConfig>(); // 聊天信息字典
     private GameObject MatchIcon;
+    private UIManager uiManager;
     void Awake()
     {
         LoadNPCDataFromJson();
@@ -49,7 +51,8 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
         }
 
         // 反序列化
-        List<NpcConfig> chatGroups = JsonUtilityWrapper.FromJsonList<NpcConfig>(jsonText.text);
+        //List<NpcConfig> chatGroups = JsonUtilityWrapper.FromJsonList<NpcConfig>();
+        List<NpcConfig> chatGroups = JsonConvert.DeserializeObject<List<NpcConfig>>(jsonText.text);
         chatInfoDic.Clear();
         foreach (var group in chatGroups)
         {
@@ -59,6 +62,8 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
     }
     void Start()
     {
+        //LoadNPCDataFromJson();
+        //uiManager = GetComponentInParent<GameObject>().transform.Find("UI").GetComponent<UIManager>();
         // 可在此处对节点做初始化操作
         Transform bgimage = transform.Find("BgImage");
         Bgimage = bgimage.GetComponent<RawImage>();    
@@ -76,7 +81,7 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
         DownLoadBtn = bgimage?.Find("DownLoadBtn")?.GetComponent<Button>();
         MatchIcon = bgimage?.Find("MatchIcon").gameObject;
         DownLoadBtn.onClick.AddListener(() => {
-            UIManager.Instance.EndCardPresented();
+            uiManager.EndCardPresented();
         });
         pos = new Vector3(0, GuideAnimation.transform.localPosition.y, 0);
         SetPanelInfo(sche);
@@ -89,18 +94,18 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
             Debug.LogError("SlideCard对象为空，无法设置父对象");
         }
         dragStartPos = SlideCard.transform.localPosition; // 初始化拖拽起始位置
-        //uiManager = GameObject.Find("UI").GetComponent<UIManager>();
+        uiManager = GameObject.Find("UI").GetComponent<UIManager>();
         scheText.text = sche+"/"+tarsche; // 初始化当前卡牌序号文本
         //transform.FindChild("SlideCard");
     }
 
     void SetPanelInfo(int index)
-    {  
-        Texture bgTexture = Resources.Load<Texture>("chatGameIcon/SelPanelIcon" + index+ "/bgimage");//背景图
-        Sprite sprite = Resources.Load<Sprite>("chatGameIcon/touxiang" + (index));//人物图片
-        DownLoadBtn.GetComponent<Image>().sprite = Resources.Load<Sprite>("chatGameIcon/SelPanelIcon" + index + "/downloadbtn");//下载按钮图片
-        scheImg.sprite = Resources.Load<Sprite>("chatGameIcon/SelPanelIcon" + index + "/schenum");//进度图片
-        SlideCard.GetComponent<Image>().sprite = Resources.Load<Sprite>("chatGameIcon/SelPanelIcon" + index + "/bottomframe");//滑动卡牌图片
+    {
+        Texture bgTexture = Resources.Load<Texture>(chatInfoDic[index].BgImage.ToString());//背景图
+        Sprite sprite = Resources.Load<Sprite>(chatInfoDic[index].NPCImage.ToString());//人物图片DownBtnImg
+        DownLoadBtn.GetComponent<Image>().sprite = Resources.Load<Sprite>(chatInfoDic[index].DownBtnImg.ToString());//下载按钮图片
+        scheImg.sprite = Resources.Load<Sprite>(chatInfoDic[index].ScheImg.ToString());//进度图片
+        SlideCard.GetComponent<Image>().sprite = Resources.Load<Sprite>(chatInfoDic[index].Bottomframe.ToString());//滑动卡牌图片
         Bgimage.texture = bgTexture;
         targetImage.sprite = sprite;
     }
@@ -140,14 +145,20 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
     public void OnEndDrag(PointerEventData eventData)
     {
         float eAz = SlideCard.GetComponent<RectTransform>().rotation.eulerAngles.z;
-        if ((eAz > 20 && eAz < 60) || (eAz > 210 && eAz < 340))
+        if ((eAz > 10 && eAz < 60) || (eAz > 300 && eAz < 350))
         {
-            var ismatch = (eAz > 210 && eAz < 340) && (chatInfoDic[sche].SliderDir == "right"); // 判断是否匹配
-            if (sche > tarsche|| ismatch)
+            var cursche = sche > tarsche ? tarsche : sche;
+            if (!chatInfoDic.ContainsKey(cursche))
             {
-                var NpcData = chatInfoDic[sche>tarsche?tarsche:sche];
-                UIManager.Instance.ShowAndCloseOtherPanel("matchsucpanel");
-                UIManager.Instance.GetPanelComponent<MatchSucPanel>("matchsucpanel").InitSucPanel(NpcData);
+                Debug.LogError($"Key {cursche} not found in chatInfoDic.");
+                return;
+            }
+            var ismatch = (eAz > 300 && eAz < 350) && (chatInfoDic[cursche]?.SliderDir == "right"); // 判断是否匹配
+            if (sche >= tarsche|| ismatch)
+            {
+                var NpcData = chatInfoDic[cursche];
+                uiManager.ShowAndCloseOtherPanel("matchsucpanel");
+                uiManager.GetPanelComponent<MatchSucPanel>("matchsucpanel").InitSucPanel(NpcData);
                 return;
             }
             //SlideCard.SetActive(false); // 隐藏卡牌
@@ -237,6 +248,11 @@ public class NpcConfig
     public string NPCName;
     public string NPCHobby;
     public string NPCImage;
+    public string BgImage;
     public string SliderDir;
+    public string DownBtnImg;
+    public string Bottomframe;
+    public string ScheImg;
+    public string NPCSmallImg;
 
 }

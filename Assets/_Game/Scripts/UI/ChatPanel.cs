@@ -8,6 +8,8 @@ using System.Xml;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
+using TMPro;
 
 public class ChatPanel : MonoBehaviour
 {
@@ -34,6 +36,8 @@ public class ChatPanel : MonoBehaviour
     Vector3 tipsPos = new Vector3(348, 20, 0); // TipsIcon初始位置
     public Dictionary<int, ChatGroup> chatInfoDic = new Dictionary<int, ChatGroup>(); // 聊天信息字典
     private Dictionary<string, List<int>> NameToChatInfo = new Dictionary<string, List<int>>(); // 名字到聊天信息的映射
+    private UIManager uiManager;
+    private Sequence animationSequence; // 将临时变量转化为全局变量
 
     void Awake()
     {
@@ -50,7 +54,7 @@ public class ChatPanel : MonoBehaviour
         }
 
         // 反序列化
-        List<ChatGroup> chatGroups = JsonUtilityWrapper.FromJsonList<ChatGroup>(jsonText.text);
+        List<ChatGroup> chatGroups = JsonConvert.DeserializeObject<List<ChatGroup>>(jsonText.text); //JsonUtilityWrapper.FromJsonList<ChatGroup>(jsonText.text);
         chatInfoDic.Clear();
         foreach (var group in chatGroups)
         {
@@ -61,6 +65,7 @@ public class ChatPanel : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        uiManager = GameObject.Find("UI").GetComponent<UIManager>();
         PhoneBKImg = transform.Find("PhoneBK").GetComponent<Image>();
         chatView = transform.Find("PhoneBK/Scroll View/Viewport/Content")?.gameObject;
         chatItem = Resources.Load<GameObject>("Prefabs/UI/ChatItem");
@@ -99,16 +104,18 @@ public class ChatPanel : MonoBehaviour
         SelABBg.sprite = Resources.Load<Sprite>($"chatGameIcon/ChatPanelIcon/chooseBg{npcid}");
         ASelBtn.GetComponent<Image>().sprite = Resources.Load<Sprite>($"chatGameIcon/ChatPanelIcon/chatTextBg{npcid}");
         BSelBtn.GetComponent<Image>().sprite = Resources.Load<Sprite>($"chatGameIcon/ChatPanelIcon/chatTextBg{npcid}");
+        HeadInfo.sprite = Resources.Load<Sprite>(npcConfig.NPCSmallImg);
+        NpcName.text = npcConfig.NPCName;
+        NpcHobby.text = npcConfig.NPCHobby;
     }
     private void OnEnable()
     {
 
     }
 
-
     void OnDestroy()
     {
-
+        DOTween.Kill(animationSequence); // 在销毁时停止所有与animationSequence相关的动画
     }
 
     //void CreateMyChat(int index, bool ismychat)
@@ -125,7 +132,11 @@ public class ChatPanel : MonoBehaviour
     void SetProportionalSize(RectTransform img, float sc)
     {
         Image imageComponent = img.GetComponent<Image>();
-        imageComponent.DOFillAmount(sc/100, 0.5f);
+        imageComponent.DOFillAmount(sc / 100, 0.5f);
+        if(sc>=90)
+        {
+            uiManager.EndCardPresented();
+        }
     }
 
     void ChatProcess(int selIndex, bool ismychat)//聊天流程
@@ -146,10 +157,15 @@ public class ChatPanel : MonoBehaviour
         {
             yield return new WaitForSeconds(0.5f);
             GameObject item = GameObject.Instantiate(ismychat ? mychatItem : chatItem, chatView.transform);
-            Text itemText = item.transform.Find("ChatBg/chattext")?.GetComponent<Text>();
+            TextMeshProUGUI itemText = item.transform.Find("ChatBg/chatText")?.GetComponent<TextMeshProUGUI>();
             RectTransform rt = item.GetComponent<RectTransform>();
             Transform fadeChat = item.transform.Find("ChatBg");
+            Image icon = item.transform.Find("icon")?.GetComponent<Image>();
             Image itemChatBg = fadeChat?.GetComponent<Image>();
+            if (icon != null)
+            {
+                icon.sprite = Resources.Load<Sprite>(npcConfig.NPCSmallImg);
+            }
             itemChatBg.sprite = Resources.Load<Sprite>($"chatGameIcon/ChatPanelIcon/chatTextBg{npcConfig.NPCID}");
             Vector3 originalScale = fadeChat.localScale;
             if (itemText != null)
@@ -157,11 +173,14 @@ public class ChatPanel : MonoBehaviour
                 itemText.text = chatList[i].text;
                 //itemText.ForceMeshUpdate();
                 fadeChat.localScale = Vector3.zero;
-                float singleLineHeight = 2;// itemText.lineSpacing;
-                float totalHeight = itemText.preferredHeight;
+                float singleLineHeight = itemText.lineSpacing;// itemText.lineSpacing;
+                float totalHeight = itemText.GetPreferredValues().y;
+
                 Vector2 newSize = rt.sizeDelta;
-                newSize.y = singleLineHeight > 3 ? totalHeight : rt.sizeDelta.y;
+                newSize.y += totalHeight > 84 ? totalHeight : 0;
                 rt.sizeDelta = newSize;
+                //Debug.LogError("单行长度" + totalHeight + "实际长度" + singleLineHeight);
+                //Debug.LogError("预制体高度" + rt.sizeDelta.x + "预制体长度" + rt.sizeDelta.y);
             }
             rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, yPos);
             yPos -= rt.sizeDelta.y + 10;
@@ -175,8 +194,8 @@ public class ChatPanel : MonoBehaviour
             LayoutRebuilder.ForceRebuildLayoutImmediate(chatView.GetComponent<RectTransform>());
             yield return new WaitForSeconds(1f);
 
-            Sequence seq = DOTween.Sequence();
-            seq.Append(fadeChat.DOScale(originalScale, 0.2f))
+            animationSequence = DOTween.Sequence(); // 使用全局变量
+            animationSequence.Append(fadeChat.DOScale(originalScale, 0.2f))
                .Join(fadeChat.GetComponent<CanvasGroup>()?.DOFade(1, 0.2f));
             //Debug.LogError("重新算描绘大小");
             if (itemText != null)
@@ -190,63 +209,64 @@ public class ChatPanel : MonoBehaviour
         }
         scrollRect.verticalNormalizedPosition = 0f;
 
-        if (chatInfoDic[selIndex + 1] == null)
+        if (selIndex + 1 > chatInfoDic.Count)
             yield break;
         yield return new WaitForSeconds(1f);
-        ASelBtn.GetComponentInChildren<Text>().text = chatInfoDic[selIndex + 1].messages[0].text;
-        BSelBtn.GetComponentInChildren<Text>().text = chatInfoDic[selIndex + 2].messages[0].text;
-        isSel = false;
+
         if (ismychat)
         {
             SelectChooseAB.SetActive(false);
-            if (chatInfoDic[selIndex].sche!=100)
+            //PlayerAnimation();
+            if (chatInfoDic[selIndex].sche <= 90)
             {
-                UIManager.Instance.EndCardPresented();
-            }
-            else {
                 ChatProcess(selIndex + 2, !ismychat);
                 curselindex += 2;
             }
-                
+
         }
         else
         {
             SelectChooseAB.SetActive(true);
             PlayerAnimation();
+            
         }
+        ASelBtn.GetComponentInChildren<TextMeshProUGUI>().text = chatInfoDic[selIndex + 1].messages[0].text;
+        BSelBtn.GetComponentInChildren<TextMeshProUGUI>().text = chatInfoDic[selIndex + 2].messages[0].text;
+        isSel = false;
     }
 
     //播放动画
     void PlayerAnimation()
     {
+        if (animationSequence != null)
+        {
+            animationSequence.Kill();
+        }
         TipsIcon.localPosition = tipsPos;
         TipsIcon.localScale = Vector3.one;
         ASelBtn.transform.localScale = Vector3.one;
         BSelBtn.transform.localScale = Vector3.one;
-        DOTween.Kill(TipsIcon);
-        DOTween.Kill(ASelBtn.transform);
-        DOTween.Kill(BSelBtn.transform);
         if (SelectChooseAB.activeSelf && !isSel)
         {
-            Sequence seq = DOTween.Sequence();
+            animationSequence = DOTween.Sequence(); // 使用全局变量
             // TipsIcon移动
-            seq.Append(TipsIcon.DOLocalMoveY(-250f, 0.5f));
+            animationSequence.Append(TipsIcon.DOLocalMoveY(-250f, 0.5f));
             // ASelBtn和TipsIcon同步放大
-            seq.Append(BSelBtn.transform.DOScale(1.3f, 0.15f).SetEase(Ease.OutQuad))
+            animationSequence.Append(BSelBtn.transform.DOScale(1.3f, 0.15f).SetEase(Ease.OutQuad))
                .Join(TipsIcon.DOScale(0.7f, 0.15f).SetEase(Ease.OutQuad));
             // ASelBtn和TipsIcon同步还原
-            seq.Append(BSelBtn.transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad))
+            animationSequence.Append(BSelBtn.transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad))
                .Join(TipsIcon.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
-            seq.Append(TipsIcon.DOLocalMoveY(50f, 0.5f));
+            animationSequence.Append(TipsIcon.DOLocalMoveY(50f, 0.5f));
             // BSelBtn和TipsIcon同步放大
-            seq.Append(ASelBtn.transform.DOScale(1.3f, 0.15f).SetEase(Ease.OutQuad))
+            animationSequence.Append(ASelBtn.transform.DOScale(1.3f, 0.15f).SetEase(Ease.OutQuad))
                .Join(TipsIcon.DOScale(0.7f, 0.15f).SetEase(Ease.OutQuad));
             // BSelBtn和TipsIcon同步还原
-            seq.Append(ASelBtn.transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad))
+            animationSequence.Append(ASelBtn.transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad))
                .Join(TipsIcon.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
 
             // TipsIcon回到原点
-            seq.SetLoops(-1);
+            animationSequence.SetLoops(-1);
         }
     }
 
@@ -254,7 +274,7 @@ public class ChatPanel : MonoBehaviour
     public void InitNPCInfo(NpcConfig Npcconfig)
     {
         npcConfig = Npcconfig;
-        
+
         //HeadInfo = transform.Find("PhoneBK/HeadInfo")?.GetComponent<Image>();
         //NpcName = transform.Find("PhoneBK/Name")?.GetComponent<Text>();
         //NpcHobby = transform.Find("PhoneBK/Hobby")?.GetComponent<Text>();
