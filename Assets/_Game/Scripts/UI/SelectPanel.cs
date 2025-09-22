@@ -12,6 +12,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Newtonsoft.Json;
+using TMPro;
 
 public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
@@ -23,7 +24,9 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
     private Vector2 dragStartPos;
     private Vector2 dragEndPos;
     private Image scheImg; // 记录当前卡牌的文本
-    private Text scheText; // 记录当前卡牌的文本
+    private Text scheText; // 记录当前卡牌的进度文本
+    private Text sliderTips;//滑动卡片提示文本
+    private TextMeshProUGUI MainTips;//主界面的提示文本
     private Image targetImage; // 目标图片
     private float roz = 0f;
     private int sche =1; // 记录当前的卡牌序号
@@ -43,7 +46,7 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
 
     void LoadNPCDataFromJson()
     {
-        TextAsset jsonText = Resources.Load<TextAsset>("NPData");
+        TextAsset jsonText = Resources.Load<TextAsset>("npc");
         if (jsonText == null)
         {
             Debug.LogError("未找到聊天数据文件 NPData.json");
@@ -77,13 +80,16 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
         targetImage = SlideCard.transform.Find("Zhezhao/PictureIcon")?.GetComponent<Image>();
         GuideAnimation = SlideCard.transform.Find("GuideAnimation").gameObject;
         scheText = SlideCard.transform.Find("CurSche/Sche")?.GetComponent<Text>();
+        sliderTips = SlideCard.transform.Find("Tips")?.GetComponent<Text>();
         scheImg = SlideCard.transform.Find("CurSche")?.GetComponent<Image>();
         DownLoadBtn = bgimage?.Find("DownLoadBtn")?.GetComponent<Button>();
         MatchIcon = bgimage?.Find("MatchIcon").gameObject;
+        MainTips  = bgimage?.Find("XunWen")?.GetComponent<TextMeshProUGUI>();
         DownLoadBtn.onClick.AddListener(() => {
             uiManager.EndCardPresented();
         });
         pos = new Vector3(0, GuideAnimation.transform.localPosition.y, 0);
+        uiManager = GameObject.Find("UI").GetComponent<UIManager>();
         SetPanelInfo(sche);
         if (bgimage != null)
         {
@@ -94,18 +100,24 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
             Debug.LogError("SlideCard对象为空，无法设置父对象");
         }
         dragStartPos = SlideCard.transform.localPosition; // 初始化拖拽起始位置
-        uiManager = GameObject.Find("UI").GetComponent<UIManager>();
         scheText.text = sche+"/"+tarsche; // 初始化当前卡牌序号文本
         //transform.FindChild("SlideCard");
     }
 
     void SetPanelInfo(int index)
     {
+        if (!chatInfoDic.ContainsKey(index) || chatInfoDic[index] == null)
+        {
+            Debug.LogError($"chatInfoDic[{index}] 不存在或为 null");
+            return;
+        }
         Texture bgTexture = Resources.Load<Texture>(chatInfoDic[index].BgImage.ToString());//背景图
         Sprite sprite = Resources.Load<Sprite>(chatInfoDic[index].NPCImage.ToString());//人物图片DownBtnImg
         DownLoadBtn.GetComponent<Image>().sprite = Resources.Load<Sprite>(chatInfoDic[index].DownBtnImg.ToString());//下载按钮图片
         scheImg.sprite = Resources.Load<Sprite>(chatInfoDic[index].ScheImg.ToString());//进度图片
         SlideCard.GetComponent<Image>().sprite = Resources.Load<Sprite>(chatInfoDic[index].Bottomframe.ToString());//滑动卡牌图片
+        sliderTips.text = uiManager.GetLocalizedText(chatInfoDic[index],"SliderCardTips");
+        MainTips.text = uiManager.GetLocalizedText(chatInfoDic[index],"XunWenTips");
         Bgimage.texture = bgTexture;
         targetImage.sprite = sprite;
     }
@@ -157,6 +169,7 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
             if (sche >= tarsche|| ismatch)
             {
                 var NpcData = chatInfoDic[cursche];
+                uiManager.PlayMatchSuccessSound();
                 uiManager.ShowAndCloseOtherPanel("matchsucpanel");
                 uiManager.GetPanelComponent<MatchSucPanel>("matchsucpanel").InitSucPanel(NpcData);
                 return;
@@ -166,6 +179,7 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
             scheText.text = sche + "/" + tarsche; // 初始化当前卡牌序号文本
             SetPanelInfo(sche);
             SlideCard.GetComponent<CanvasGroup>().alpha = 0;//获取透明度进行修改之后dotween进行显示
+            uiManager.PlayMatchFailureSound();
             StartCoroutine(nextCard(ismatch));
         }
         else
@@ -244,15 +258,24 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
 [System.Serializable]
 public class NpcConfig
 {
-    public int NPCID;
-    public string NPCName;
-    public string NPCHobby;
-    public string NPCImage;
-    public string BgImage;
-    public string SliderDir;
-    public string DownBtnImg;
-    public string Bottomframe;
-    public string ScheImg;
-    public string NPCSmallImg;
-
+    public int NPCID;//人物id
+    public string NPCName;//人物名字
+    public string NPCName_zh;//人物名字
+    public string NPCName_ko;//人物名字
+    public string NPCHobby;//人物爱好
+    public string NPCImage;//人物图片
+    public string BgImage;//背景颜色图
+    public string SliderDir;//滑动匹配方向
+    public string DownBtnImg;//下载图片
+    public string Bottomframe;//按钮
+    public string ScheImg;//进度图片
+    public string NPCSmallImg;//npc头像
+    public string XunWenTips;//滑动界面主界面提示语
+    public string XunWenTips_zh;//滑动界面主界面提示语
+    public string XunWenTips_ko;//滑动界面主界面提示语
+    public string SliderCardTips;//滑动界面卡片提示语
+    public string SliderCardTips_zh;//滑动界面卡片提示语
+    public string SliderCardTips_ko;//滑动界面卡片提示语
+    public List<int> selectList;//第一次进来npc讲话的聊天列表
+    public int ResourseID;
 }

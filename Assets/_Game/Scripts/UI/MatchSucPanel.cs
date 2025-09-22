@@ -51,6 +51,7 @@ public class MatchSucPanel : MonoBehaviour
     {
         Love2.DOFade(1, 0.5f);
         yield return new WaitForSeconds(0.5f);
+        uiManager.PlayHeartMomentSound();
         // Òþ²Ø Love2£¬ÏÔÊ¾ Love3
         Love3.DOFade(1, 0.5f);
         yield return new WaitForSeconds(2f);

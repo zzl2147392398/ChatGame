@@ -1,19 +1,15 @@
 using DG.Tweening;
-using System;
+using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Xml;
-using Unity.Collections.LowLevel.Unsafe;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Newtonsoft.Json;
-using TMPro;
 
 public class ChatPanel : MonoBehaviour
 {
-    private GameObject chatView; // ÁÄÌìÊÓÍ¼¶ÔÏóÒýÓÃ
+    private GameObject chatView; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     private GameObject chatItem;
     private GameObject mychatItem;
     private GameObject SelectChooseAB;
@@ -21,24 +17,25 @@ public class ChatPanel : MonoBehaviour
     private Image PhoneBKImg;
     private Button ASelBtn;
     private Button BSelBtn;
+    private Button CSelBtn;
     private RectTransform ScheImg;
     private Transform TipsIcon;
-    private ScrollRect scrollRect; // ¹ö¶¯ÊÓÍ¼×é¼þÒýÓÃ  
-    private Image HeadInfo;//ÈËÎïÍ¼Æ¬
-    private Text NpcName;//ÈËÎïÃû×Ö
-    private Text NpcHobby;//ÈËÎï°®ºÃ
-    private bool isSel = false; // ÊÇ·ñÑ¡ÔñÁËA»òB
+    private ScrollRect scrollRect; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  
+    private Image HeadInfo;//ï¿½ï¿½ï¿½ï¿½Í¼Æ¬
+    private TextMeshProUGUI NpcName;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    private Text NpcHobby;//ï¿½ï¿½ï¿½ï°®ï¿½ï¿½
+    private bool isSel = false; // ï¿½Ç·ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½B
     private NpcConfig npcConfig;
     //private GameObject SelectChooseAB
     float yPos = -20;
     float InityPos = 646;
     int curselindex = 1;
-    Vector3 tipsPos = new Vector3(348, 20, 0); // TipsIcon³õÊ¼Î»ÖÃ
-    public Dictionary<int, ChatGroup> chatInfoDic = new Dictionary<int, ChatGroup>(); // ÁÄÌìÐÅÏ¢×Öµä
-    private Dictionary<string, List<int>> NameToChatInfo = new Dictionary<string, List<int>>(); // Ãû×Öµ½ÁÄÌìÐÅÏ¢µÄÓ³Éä
+    Vector3 tipsPos = new Vector3(348, 20, 0); // TipsIconï¿½ï¿½Ê¼Î»ï¿½ï¿½
+    public List<ChatGroup> allChatInfoDic = new List<ChatGroup>(); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½Öµï¿½
+    public Dictionary<int, ChatGroup> chatInfoDic = new Dictionary<int, ChatGroup>(); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½Öµï¿½
     private UIManager uiManager;
-    private Sequence animationSequence; // ½«ÁÙÊ±±äÁ¿×ª»¯ÎªÈ«¾Ö±äÁ¿
-
+    private Sequence animationSequence; // ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ÎªÈ«ï¿½Ö±ï¿½ï¿½ï¿½
+    private Sequence animationSequence1;
     void Awake()
     {
         LoadChatDataFromJson();
@@ -46,19 +43,20 @@ public class ChatPanel : MonoBehaviour
 
     void LoadChatDataFromJson()
     {
-        TextAsset jsonText = Resources.Load<TextAsset>("ChatData");
+        TextAsset jsonText = Resources.Load<TextAsset>("chat");
         if (jsonText == null)
         {
-            Debug.LogError("Î´ÕÒµ½ÁÄÌìÊý¾ÝÎÄ¼þ ChatData.json");
+            Debug.LogError("Î´ï¿½Òµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ ChatData.json");
             return;
         }
 
-        // ·´ÐòÁÐ»¯
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½
         List<ChatGroup> chatGroups = JsonConvert.DeserializeObject<List<ChatGroup>>(jsonText.text); //JsonUtilityWrapper.FromJsonList<ChatGroup>(jsonText.text);
         chatInfoDic.Clear();
         foreach (var group in chatGroups)
         {
-            chatInfoDic[group.chatId] = group;
+            allChatInfoDic.Add(group);
+            //allChatInfoDic[group.chatId] = group;
         }
     }
 
@@ -74,38 +72,37 @@ public class ChatPanel : MonoBehaviour
         SelABBg = SelectChooseAB.GetComponent<Image>();
         ASelBtn = SelectChooseAB.transform.Find("ABtn")?.GetComponent<Button>();
         BSelBtn = SelectChooseAB.transform.Find("BBtn")?.GetComponent<Button>();
+        CSelBtn = SelectChooseAB.transform.Find("CBtn")?.GetComponent<Button>();
         TipsIcon = SelectChooseAB.transform.Find("TipsIcon");
         tipsPos = new Vector3(0, TipsIcon.localPosition.y, TipsIcon.localPosition.z);
         ScheImg = transform.Find("PhoneBK/HeartRate /Sche")?.GetComponent<RectTransform>();
         scrollRect = transform.Find("PhoneBK/Scroll View")?.GetComponent<ScrollRect>();
         HeadInfo = transform.Find("PhoneBK/HeadInfo")?.GetComponent<Image>();
-        NpcName = transform.Find("PhoneBK/Name")?.GetComponent<Text>();
+        NpcName = transform.Find("PhoneBK/Name")?.GetComponent<TextMeshProUGUI>();
         NpcHobby = transform.Find("PhoneBK/Hobby")?.GetComponent<Text>();
-        SetProportionalSize(ScheImg, chatInfoDic[curselindex].sche);
-        ASelBtn.onClick.AddListener(() =>
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½É¸Ñ¡Ò»ï¿½ï¿½ï¿½ï¿½Øµï¿½npcï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        foreach (var chatinfo in allChatInfoDic)
         {
-            isSel = true;
-            ChatProcess(curselindex + 1, true);
-            SelectChooseAB.SetActive(false); // ÏÔÊ¾Ñ¡Ôñ°´Å¥
-            SetProportionalSize(ScheImg, chatInfoDic[curselindex].sche);
-        });
-        BSelBtn.onClick.AddListener(() =>
+            if (chatinfo.npcId == npcConfig.NPCID)
+            {
+                chatInfoDic[chatinfo.chatId] = chatinfo;
+            }
+        };
+        if (npcConfig.selectList!=null && chatInfoDic[npcConfig.selectList[npcConfig.selectList.Count-1]]!=null)
         {
-            isSel = true;
-            ChatProcess(curselindex + 2, true);
-            SelectChooseAB.SetActive(false); // ÏÔÊ¾Ñ¡Ôñ°´Å¥
-            SetProportionalSize(ScheImg, chatInfoDic[curselindex].sche);
-        });
-        SelectChooseAB.SetActive(false); // ³õÊ¼Òþ²ØÑ¡Ôñ°´Å¥
-        ChatProcess(1, false);
+            SetProportionalSize(ScheImg, chatInfoDic[npcConfig.selectList[npcConfig.selectList.Count-1]].sche);
+        }
+        SelectChooseAB.SetActive(false); // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½Å¥
+        ChatProcess(-1, false);
 
-        var npcid = npcConfig.NPCID;
+        var npcid = npcConfig.ResourseID;
         PhoneBKImg.sprite = Resources.Load<Sprite>($"chatGameIcon/SelPanelIcon{npcid}/bgimage");
         SelABBg.sprite = Resources.Load<Sprite>($"chatGameIcon/ChatPanelIcon/chooseBg{npcid}");
         ASelBtn.GetComponent<Image>().sprite = Resources.Load<Sprite>($"chatGameIcon/ChatPanelIcon/chatTextBg{npcid}");
         BSelBtn.GetComponent<Image>().sprite = Resources.Load<Sprite>($"chatGameIcon/ChatPanelIcon/chatTextBg{npcid}");
+        CSelBtn.GetComponent<Image>().sprite = Resources.Load<Sprite>($"chatGameIcon/ChatPanelIcon/chatTextBg{npcid}");
         HeadInfo.sprite = Resources.Load<Sprite>(npcConfig.NPCSmallImg);
-        NpcName.text = npcConfig.NPCName;
+        NpcName.text = uiManager.GetLocalizedText(npcConfig,"NPCName");// npcConfig.NPCName;//
         NpcHobby.text = npcConfig.NPCHobby;
     }
     private void OnEnable()
@@ -115,7 +112,8 @@ public class ChatPanel : MonoBehaviour
 
     void OnDestroy()
     {
-        DOTween.Kill(animationSequence); // ÔÚÏú»ÙÊ±Í£Ö¹ËùÓÐÓëanimationSequenceÏà¹ØµÄ¶¯»­
+        DOTween.Kill(animationSequence); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±Í£Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½animationSequenceï¿½ï¿½ØµÄ¶ï¿½ï¿½ï¿½
+        DOTween.Kill(animationSequence1);
     }
 
     //void CreateMyChat(int index, bool ismychat)
@@ -125,7 +123,7 @@ public class ChatPanel : MonoBehaviour
     //    //if (itemText != null)
     //    //{
     //    //    itemText.text = ASelBtn.GetComponentInChildren<Text>().text;
-    //    //    //itemText.enabled = false; // Ä¬ÈÏÒþ²Ø
+    //    //    //itemText.enabled = false; // Ä¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     //    //}
     //    ChatProcess(index);
     //}
@@ -135,25 +133,53 @@ public class ChatPanel : MonoBehaviour
         imageComponent.DOFillAmount(sc / 100, 0.5f);
         if(sc>=90)
         {
+            //Debug.LogError("ï¿½ï¿½Ê¼ï¿½ï¿½×ª");
             uiManager.EndCardPresented();
         }
     }
 
-    void ChatProcess(int selIndex, bool ismychat)//ÁÄÌìÁ÷³Ì
-    {
+    void ChatProcess(int selIndex, bool ismychat)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    { //ï¿½ï¿½ï¿½ï¿½Òªï¿½Ó¸ï¿½ï¿½Ð¶ï¿½ï¿½Çµï¿½Ò»ï¿½Î»ï¿½ï¿½ï¿½Ö®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         StartCoroutine(ChatCoroutine(selIndex, ismychat));
 
         //scrollRect.verticalNormalizedPosition = 0;
     }
 
-    // ÔÚChatCoroutine·½·¨ÖÐ£¬È·±£Ã¿´ÎÌí¼ÓÐÂÁÄÌìÏîºó¹ö¶¯Ìõ×Ô¶¯¹ö¶¯µ½µ×²¿
+    // ï¿½ï¿½ChatCoroutineï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½È·ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿½
     IEnumerator ChatCoroutine(int selIndex, bool ismychat)
     {
-        if (!chatInfoDic.ContainsKey(selIndex)) yield break;
-        List<ChatMessage> chatList = chatInfoDic[selIndex].messages;
-        curselindex = selIndex;
+        List<ChatMessage> chatList = new List<ChatMessage>();
+        if (selIndex < 0)
+        {
+            for (int i = 0; i < npcConfig.selectList.Count; i++)
+            {
+                chatList.Add(chatInfoDic[npcConfig.selectList[i]].messages);
+            }
+            selIndex = curselindex = npcConfig.selectList[npcConfig.selectList.Count - 1];
+        }
+        else if (!chatInfoDic.ContainsKey(selIndex))
+        { 
+            yield break;
+        }
+        else {
+            if (ismychat)
+            {
+                chatList.Add(chatInfoDic[curselindex].messages);
+                curselindex = selIndex;
+            }
+            else
+            {
+                foreach (var i in chatInfoDic[curselindex].selectList)
+                {
+                    chatList.Add(chatInfoDic[i].messages);
+                }
+                curselindex = chatInfoDic[selIndex].selectList[chatInfoDic[selIndex].selectList.Count - 1]; ;
+            }
+        }
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¸ï¿½ï¿½Âµï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ô»ï¿½ï¿½ï¿½
+        
         var ys = 0;
-        for (int i = 0; i < chatList.Count; i++)
+        for (int i = 0; i < chatList.Count; i++)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         {
             yield return new WaitForSeconds(0.5f);
             GameObject item = GameObject.Instantiate(ismychat ? mychatItem : chatItem, chatView.transform);
@@ -166,7 +192,7 @@ public class ChatPanel : MonoBehaviour
             {
                 icon.sprite = Resources.Load<Sprite>(npcConfig.NPCSmallImg);
             }
-            itemChatBg.sprite = Resources.Load<Sprite>($"chatGameIcon/ChatPanelIcon/chatTextBg{npcConfig.NPCID}");
+            itemChatBg.sprite = Resources.Load<Sprite>($"chatGameIcon/ChatPanelIcon/chatTextBg{npcConfig.ResourseID}");
             Vector3 originalScale = fadeChat.localScale;
             if (itemText != null)
             {
@@ -179,8 +205,8 @@ public class ChatPanel : MonoBehaviour
                 Vector2 newSize = rt.sizeDelta;
                 newSize.y += totalHeight > 84 ? totalHeight : 0;
                 rt.sizeDelta = newSize;
-                //Debug.LogError("µ¥ÐÐ³¤¶È" + totalHeight + "Êµ¼Ê³¤¶È" + singleLineHeight);
-                //Debug.LogError("Ô¤ÖÆÌå¸ß¶È" + rt.sizeDelta.x + "Ô¤ÖÆÌå³¤¶È" + rt.sizeDelta.y);
+                //Debug.LogError("ï¿½ï¿½ï¿½Ð³ï¿½ï¿½ï¿½" + totalHeight + "Êµï¿½Ê³ï¿½ï¿½ï¿½" + singleLineHeight);
+                //Debug.LogError("Ô¤ï¿½ï¿½ï¿½ï¿½ß¶ï¿½" + rt.sizeDelta.x + "Ô¤ï¿½ï¿½ï¿½å³¤ï¿½ï¿½" + rt.sizeDelta.y);
             }
             rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, yPos);
             yPos -= rt.sizeDelta.y + 10;
@@ -193,91 +219,151 @@ public class ChatPanel : MonoBehaviour
             chatView.GetComponent<RectTransform>().sizeDelta = new Vector2(chatView.GetComponent<RectTransform>().sizeDelta.x, ys > InityPos ? ys : InityPos);
             LayoutRebuilder.ForceRebuildLayoutImmediate(chatView.GetComponent<RectTransform>());
             yield return new WaitForSeconds(1f);
+            if (ismychat)
+            {
+                uiManager.PlaySendMessageSound();
+            }
+            else {
+                uiManager.PlayNewMessagePopSound();
+            }
 
-            animationSequence = DOTween.Sequence(); // Ê¹ÓÃÈ«¾Ö±äÁ¿
-            animationSequence.Append(fadeChat.DOScale(originalScale, 0.2f))
+            animationSequence1 = DOTween.Sequence(); // Ê¹ï¿½ï¿½È«ï¿½Ö±ï¿½ï¿½ï¿½
+            animationSequence1.Append(fadeChat.DOScale(originalScale, 0.2f))
                .Join(fadeChat.GetComponent<CanvasGroup>()?.DOFade(1, 0.2f));
-            //Debug.LogError("ÖØÐÂËãÃè»æ´óÐ¡");
+            //Debug.LogError("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡");
             if (itemText != null)
             {
                 itemText.enabled = true;
             }
-
-            // ×Ô¶¯¹ö¶¯µ½µ×²¿
+            //curselindex += 1;
+            // ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿½
             Canvas.ForceUpdateCanvases();
             scrollRect.verticalNormalizedPosition = 0f;
         }
-        scrollRect.verticalNormalizedPosition = 0f;
+        //scrollRect.verticalNormalizedPosition = 0f;
 
-        if (selIndex + 1 > chatInfoDic.Count)
-            yield break;
+        //if (selIndex + 1 > chatInfoDic.Count)
+        //    yield break;
         yield return new WaitForSeconds(1f);
 
-        if (ismychat)
+        if (ismychat)//Ñ¡ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ëµ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½npcï¿½Ø¸ï¿½
         {
             SelectChooseAB.SetActive(false);
             //PlayerAnimation();
-            if (chatInfoDic[selIndex].sche <= 90)
+            if (chatInfoDic[selIndex].sche <= 90 && chatInfoDic[selIndex].selectList.Count > 0)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½Ç·ï¿½ï¿½ï¿½selectlist
             {
-                ChatProcess(selIndex + 2, !ismychat);
-                curselindex += 2;
+                
+                Debug.Log("ï¿½ï¿½ï¿½Åµï¿½ï¿½Ç±ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½");
+                ChatProcess(curselindex, !ismychat);
+                curselindex = chatInfoDic[selIndex].selectList[chatInfoDic[selIndex].selectList.Count-1];
+            }
+            else
+            {
+                Debug.LogWarning("Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½selectlist0");
             }
 
         }
-        else
+        else 
         {
-            SelectChooseAB.SetActive(true);
-            PlayerAnimation();
-            
+            if (!ismychat && chatInfoDic[selIndex].selectList.Count > 0)
+            {
+                SelectChooseAB.SetActive(true);
+                ChatGroup tempchatInfo = chatInfoDic[curselindex];
+                ASelBtn.onClick.RemoveAllListeners();
+                BSelBtn.onClick.RemoveAllListeners();
+                CSelBtn.onClick.RemoveAllListeners();
+                ASelBtn.onClick.AddListener(() => HandleButtonClick(0));
+                BSelBtn.onClick.AddListener(() => HandleButtonClick(1));
+                CSelBtn.onClick.AddListener(() => HandleButtonClick(2));
+                ASelBtn.GetComponentInChildren<TextMeshProUGUI>().text = uiManager.GetLocalizedText(chatInfoDic[tempchatInfo.selectList[0]].messages,"text");
+                BSelBtn.GetComponentInChildren<TextMeshProUGUI>().text = uiManager.GetLocalizedText(chatInfoDic[tempchatInfo.selectList[1]].messages, "text");
+                CSelBtn.GetComponentInChildren<TextMeshProUGUI>().text = uiManager.GetLocalizedText(chatInfoDic[tempchatInfo.selectList[2]].messages, "text");
+                PlayerAnimation();
+            }
+            else {
+                Debug.LogWarning("Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½selectlist1");
+            }
         }
-        ASelBtn.GetComponentInChildren<TextMeshProUGUI>().text = chatInfoDic[selIndex + 1].messages[0].text;
-        BSelBtn.GetComponentInChildren<TextMeshProUGUI>().text = chatInfoDic[selIndex + 2].messages[0].text;
+        
         isSel = false;
     }
+    private void HandleButtonClick(int index)
+    {
+        isSel = true;
+        if (index<= chatInfoDic[curselindex].selectList.Count-1)
+        {
+            curselindex = chatInfoDic[curselindex].selectList[index];
+            ChatProcess(curselindex, true);
+            SelectChooseAB.SetActive(false); // ï¿½Ø±ï¿½Ñ¡ï¿½ï¿½Å¥
+            SetProportionalSize(ScheImg, chatInfoDic[curselindex].sche);
+        }
+        else
+        {
+            Debug.LogWarning("Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½selectlist2");
+         }
+            
+    }
 
-    //²¥·Å¶¯»­
+    //ï¿½ï¿½ï¿½Å¶ï¿½ï¿½ï¿½
     void PlayerAnimation()
     {
+        // å®Œå…¨åœæ­¢å¹¶æ¸…ç†ä¹‹å‰çš„åŠ¨ç”»
         if (animationSequence != null)
         {
             animationSequence.Kill();
+            animationSequence = null;
         }
+        // å®Œå…¨é‡ç½®æ‰€æœ‰UIå…ƒç´ çš„çŠ¶æ€
+        ResetUIElementsState();
+        if (SelectChooseAB.activeSelf && !isSel)
+        {
+            animationSequence = DOTween.Sequence(); // Ê¹ï¿½ï¿½È«ï¿½Ö±ï¿½ï¿½ï¿½
+            SingleAniFunc(animationSequence, CSelBtn, BSelBtn, -117f, -250f);
+            SingleAniFunc(animationSequence, ASelBtn,BSelBtn, -117f, 50f);
+
+            // TipsIconï¿½Øµï¿½Ô­ï¿½ï¿½
+            animationSequence.SetLoops(-1);
+        }
+    }
+    
+    // æ–°å¢žï¼šé‡ç½®UIå…ƒç´ çŠ¶æ€çš„æ–¹æ³•
+    void ResetUIElementsState()
+    {
         TipsIcon.localPosition = tipsPos;
         TipsIcon.localScale = Vector3.one;
         ASelBtn.transform.localScale = Vector3.one;
         BSelBtn.transform.localScale = Vector3.one;
-        if (SelectChooseAB.activeSelf && !isSel)
-        {
-            animationSequence = DOTween.Sequence(); // Ê¹ÓÃÈ«¾Ö±äÁ¿
-            // TipsIconÒÆ¶¯
-            animationSequence.Append(TipsIcon.DOLocalMoveY(-250f, 0.5f));
-            // ASelBtnºÍTipsIconÍ¬²½·Å´ó
-            animationSequence.Append(BSelBtn.transform.DOScale(1.3f, 0.15f).SetEase(Ease.OutQuad))
-               .Join(TipsIcon.DOScale(0.7f, 0.15f).SetEase(Ease.OutQuad));
-            // ASelBtnºÍTipsIconÍ¬²½»¹Ô­
-            animationSequence.Append(BSelBtn.transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad))
-               .Join(TipsIcon.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
-            animationSequence.Append(TipsIcon.DOLocalMoveY(50f, 0.5f));
-            // BSelBtnºÍTipsIconÍ¬²½·Å´ó
-            animationSequence.Append(ASelBtn.transform.DOScale(1.3f, 0.15f).SetEase(Ease.OutQuad))
-               .Join(TipsIcon.DOScale(0.7f, 0.15f).SetEase(Ease.OutQuad));
-            // BSelBtnºÍTipsIconÍ¬²½»¹Ô­
-            animationSequence.Append(ASelBtn.transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad))
-               .Join(TipsIcon.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
-
-            // TipsIcon»Øµ½Ô­µã
-            animationSequence.SetLoops(-1);
-        }
+        CSelBtn.transform.localScale = Vector3.one;
+        
+        // ç¡®ä¿æ‰€æœ‰æŒ‰é’®çš„DOTweenåŠ¨ç”»éƒ½è¢«æ¸…ç†
+        DOTween.Kill(ASelBtn.transform);
+        DOTween.Kill(BSelBtn.transform);
+        DOTween.Kill(CSelBtn.transform);
+        DOTween.Kill(TipsIcon);
     }
 
-    //Êý¾Ý¸³Öµ
+    private void SingleAniFunc(Sequence ani,Button btn1,Button btn2,float startpos,float endpos)
+    {
+        ani.Append(TipsIcon.DOLocalMoveY(startpos, 0.5f));
+        // ASelBtnï¿½ï¿½TipsIconÍ¬ï¿½ï¿½ï¿½Å´ï¿½
+        ani.Append(btn2.transform.DOScale(1.3f, 0.15f).SetEase(Ease.OutQuad))
+           .Join(TipsIcon.DOScale(0.7f, 0.15f).SetEase(Ease.OutQuad));
+        // ASelBtnï¿½ï¿½TipsIconÍ¬ï¿½ï¿½ï¿½ï¿½Ô­
+        ani.Append(btn2.transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad))
+           .Join(TipsIcon.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
+
+        ani.Append(TipsIcon.DOLocalMoveY(endpos, 0.5f));
+        // BSelBtnï¿½ï¿½TipsIconÍ¬ï¿½ï¿½ï¿½Å´ï¿½
+        ani.Append(btn1.transform.DOScale(1.3f, 0.15f).SetEase(Ease.OutQuad))
+           .Join(TipsIcon.DOScale(0.7f, 0.15f).SetEase(Ease.OutQuad));
+        // BSelBtnï¿½ï¿½TipsIconÍ¬ï¿½ï¿½ï¿½ï¿½Ô­
+        ani.Append(btn1.transform.DOScale(1f, 0.15f).SetEase(Ease.InQuad))
+           .Join(TipsIcon.DOScale(1f, 0.15f).SetEase(Ease.InQuad));
+    }
+    //ï¿½ï¿½ï¿½Ý¸ï¿½Öµ
     public void InitNPCInfo(NpcConfig Npcconfig)
     {
         npcConfig = Npcconfig;
-
-        //HeadInfo = transform.Find("PhoneBK/HeadInfo")?.GetComponent<Image>();
-        //NpcName = transform.Find("PhoneBK/Name")?.GetComponent<Text>();
-        //NpcHobby = transform.Find("PhoneBK/Hobby")?.GetComponent<Text>();
     }
 }
 
@@ -285,20 +371,24 @@ public class ChatPanel : MonoBehaviour
 public class ChatMessage
 {
     public string sender;
-    public string text;
+    public string text;//Ä¬ï¿½ï¿½Ó¢ï¿½ï¿½
     public string timestamp;
-    public bool isMyChat;
+    public string text_zh;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    public string text_ko;//ï¿½ï¿½ï¿½ï¿½
 }
 
 [System.Serializable]
 public class ChatGroup
 {
     public int chatId;
-    public List<ChatMessage> messages;
-    public int sche; // ÐÄÂÊÖµ
+    public int npcId;
+    public bool isMyChat;
+    public ChatMessage messages;
+    public int sche; // ï¿½ï¿½ï¿½ï¿½Öµ
+    public List<int> selectList;//Ñ¡ï¿½ï¿½ï¿½Ð±ï¿½
 }
 
-// JsonUtility ²»Ö§³Ö List<T>£¬Ðè×Ô¶¨Òå°ü×°
+// JsonUtility ï¿½ï¿½Ö§ï¿½ï¿½ List<T>ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½×°
 //public static class JsonUtilityWrapper
 //{
 //    public static List<T> FromJsonList<T>(string json)
