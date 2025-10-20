@@ -2,7 +2,7 @@
     "version": "6.3.0",
     "projectId": "49738b63e1adb5d4baf7b343cf43e88c",
     "applicationID": 31445,
-    "creativeName": "new1",
+    "creativeName": "chat1",
     "pgServer": "EU",
     "window": {
         "‐″": true
@@ -81,7 +81,7 @@
             "externalJSLibraries": [],
             "scriptingDefines": [],
             "msbuildVersion": "17.14",
-            "monoVersion": "9.0.5",
+            "monoVersion": "9.0.9",
             "dotnetVersion": ""
         },
         "assets": {
@@ -32915,7 +32915,7 @@
                     },
                     {
                         "name": "ResetUIElementsState",
-                        "excluded": true
+                        "excluded": false
                     }
                 ]
             },
@@ -40466,6 +40466,16 @@
                         "script": "",
                         "ext": "",
                         "name": "Assets/_Game/Assets/TextMesh Pro/Resources/Fonts & Materials/PICA SDF.asset"
+                    },
+                    {
+                        "maxWidth": 512,
+                        "maxHeight": 512,
+                        "format": "png32",
+                        "compression": "none",
+                        "quality": 65,
+                        "script": "",
+                        "ext": "",
+                        "name": "Assets/_Game/Assets/TextMesh Pro/Resources/Fonts & Materials/ALIBABAPUHUITI-2-105-HEAVY SDF.asset"
                     }
                 ]
             },

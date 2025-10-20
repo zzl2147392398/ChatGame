@@ -23,7 +23,7 @@ public class ChatPanel : MonoBehaviour
     private ScrollRect scrollRect; // ������ͼ�������  
     private Image HeadInfo;//����ͼƬ
     private TextMeshProUGUI NpcName;//��������
-    private Text NpcHobby;//���ﰮ��
+    private TextMeshProUGUI NpcHobby;//���ﰮ��
     private bool isSel = false; // �Ƿ�ѡ����A��B
     private NpcConfig npcConfig;
     //private GameObject SelectChooseAB
@@ -79,7 +79,7 @@ public class ChatPanel : MonoBehaviour
         scrollRect = transform.Find("PhoneBK/Scroll View")?.GetComponent<ScrollRect>();
         HeadInfo = transform.Find("PhoneBK/HeadInfo")?.GetComponent<Image>();
         NpcName = transform.Find("PhoneBK/Name")?.GetComponent<TextMeshProUGUI>();
-        NpcHobby = transform.Find("PhoneBK/Hobby")?.GetComponent<Text>();
+        NpcHobby = transform.Find("PhoneBK/Hobby")?.GetComponent<TextMeshProUGUI>();
         //������Ҫ����ɸѡһ����ص�npc��������
         foreach (var chatinfo in allChatInfoDic)
         {
@@ -218,7 +218,7 @@ public class ChatPanel : MonoBehaviour
             ys = Mathf.Abs((int)yPos);
             chatView.GetComponent<RectTransform>().sizeDelta = new Vector2(chatView.GetComponent<RectTransform>().sizeDelta.x, ys > InityPos ? ys : InityPos);
             LayoutRebuilder.ForceRebuildLayoutImmediate(chatView.GetComponent<RectTransform>());
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(0.5f);
             if (ismychat)
             {
                 uiManager.PlaySendMessageSound();
@@ -244,7 +244,7 @@ public class ChatPanel : MonoBehaviour
 
         //if (selIndex + 1 > chatInfoDic.Count)
         //    yield break;
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.1f);
 
         if (ismychat)//ѡ��ѡ������뵽����������npc�ظ�
         {
@@ -259,6 +259,7 @@ public class ChatPanel : MonoBehaviour
             }
             else
             {
+                uiManager.EndCardPresented();
                 Debug.LogWarning("û������selectlist0");
             }
 
@@ -281,6 +282,7 @@ public class ChatPanel : MonoBehaviour
                 PlayerAnimation();
             }
             else {
+                uiManager.EndCardPresented();
                 Debug.LogWarning("û������selectlist1");
             }
         }

@@ -24,8 +24,8 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
     private Vector2 dragStartPos;
     private Vector2 dragEndPos;
     private Image scheImg; // 记录当前卡牌的文本
-    private Text scheText; // 记录当前卡牌的进度文本
-    private Text sliderTips;//滑动卡片提示文本
+    private TextMeshProUGUI scheText; // 记录当前卡牌的进度文本
+    private TextMeshProUGUI sliderTips;//滑动卡片提示文本
     private TextMeshProUGUI MainTips;//主界面的提示文本
     private Image targetImage; // 目标图片
     private float roz = 0f;
@@ -79,8 +79,8 @@ public class SelectPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndD
         SlideCard.transform.localPosition = new Vector3(0, 91, 0); // 设置本地位置 
         targetImage = SlideCard.transform.Find("Zhezhao/PictureIcon")?.GetComponent<Image>();
         GuideAnimation = SlideCard.transform.Find("GuideAnimation").gameObject;
-        scheText = SlideCard.transform.Find("CurSche/Sche")?.GetComponent<Text>();
-        sliderTips = SlideCard.transform.Find("Tips")?.GetComponent<Text>();
+        scheText = SlideCard.transform.Find("CurSche/Sche")?.GetComponent<TextMeshProUGUI>();
+        sliderTips = SlideCard.transform.Find("Tips")?.GetComponent<TextMeshProUGUI>();
         scheImg = SlideCard.transform.Find("CurSche")?.GetComponent<Image>();
         DownLoadBtn = bgimage?.Find("DownLoadBtn")?.GetComponent<Button>();
         MatchIcon = bgimage?.Find("MatchIcon").gameObject;
