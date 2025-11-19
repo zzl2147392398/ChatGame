@@ -1,48 +1,60 @@
 using DG.Tweening;
+using DG.Tweening.Core.Easing;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEditor.Progress;
 
 public class ClothesCurSelPanel : MonoBehaviour
 {
-    private Button LeftBtn;
-    private Button RightBtn;
+    public Button LeftBtn;
+    public Button RightBtn;
     private GameObject ScheContent;
     private GameObject SelectItemView;
-    private GameObject SelectItemContent;
+    public GameObject SelectItemContent;
     private GameObject SelectItem;
     private GameObject ScheItem;
     private Button DownLoadBtn;
     private Button CameraBtn;
     private Button GoOutBtn;
-    private Transform Tips;
+    public Transform Tips;
     private Effector2D Effector;
+    public Transform characterObj;
     private float timer = 0f;
     private float interval = 2f;
-    private bool bisPlayAni = true;
+    public bool bisPlayAni = true;
     private Vector2 targetPos = new Vector2(0, 320);
-
+    public int Curselitem;
+    
     // Start is called before the first frame update
     void Start()
     {
-        LeftBtn = transform.Find("Left").GetComponent<Button>();
-        RightBtn = transform.Find("Right").GetComponent<Button>();
-        DownLoadBtn = transform.Find("DownLoadBtn").GetComponent<Button>();
+        LeftBtn = transform.Find("stage/Left").GetComponent<Button>();
+        RightBtn = transform.Find("stage/Right").GetComponent<Button>();
+        DownLoadBtn = transform.Find("stage/DownLoadBtn").GetComponent<Button>();
         GoOutBtn = transform.Find("GoOutBtn").GetComponent<Button>();
-        CameraBtn = transform.Find("CameraBtn").GetComponent<Button>();
+        CameraBtn = transform.Find("stage/CameraBtn").GetComponent<Button>();
         SelectItemView = transform.Find("SelectItemView").gameObject;
         ScheContent  = transform.Find("ScheView/Viewport/Content").gameObject;
         SelectItemContent = transform.Find("SelectItemView/Viewport/Content").gameObject;
-        //SelectItem = Resources.Load<GameObject>("Prefabs/Clothes/SelectItem");
-        //ScheItem = Resources.Load<GameObject>("Prefabs/Clothes/ScheItem");
+        SelectItem = Resources.Load<GameObject>("Prefabs/Clothes/SelectItem");
+        ScheItem = Resources.Load<GameObject>("Prefabs/Clothes/ScheItem");
+        characterObj = transform.Find("stage/Root");
         Tips = transform.Find("TipsEff");
         //RefershSelectItemList();
-        Vector2 startPos = new Vector2(targetPos.x,-302f);
-        SelectItemView.GetComponent<RectTransform>().localPosition = startPos;
+        //Vector3 startPos = new Vector3(0,-302f,0);
+        //SelectItemView.GetComponent<RectTransform>().localPosition = startPos;
         SelectItemView.GetComponent<RectTransform>().DOMoveY(320, 1f).SetEase(Ease.OutCubic);
         LeftBtn.onClick.AddListener(() => ChangeCurScheBtn(false));
         RightBtn.onClick.AddListener(() => ChangeCurScheBtn(true));
+        ChangeCurScheBtn(true);
+        Curselitem = -1;
+        var endscale = characterObj.localScale*2;
+        //characterObj.localScale = new Vector3(characterObj.localScale.x * 2, characterObj.localScale.y * 2, 1);// Vector3.one * 2f;
+        Sequence seq = DOTween.Sequence();
+        seq.Append(characterObj.DOScale(endscale, 1).SetEase(Ease.OutBack));
+           //.Append(characterObj.DOMoveY(0, 1));
     }
     private void Update()
     {
@@ -64,22 +76,46 @@ public class ClothesCurSelPanel : MonoBehaviour
     {
         timer = 0;
     }
-    private void RefershSelectItemList()
+    private void RefreshScheList()
     {
         //1.根据进度CurSelectIndex来进行调用ClothesDataBase.Instance.allClothes来进行数据的获取，里面会有type类型根据进度对应拿到所有相同type类型的进行填充展示
         //2.
         var curindex = ClothesMain.CurSelectIndex;
         var ItemList= ClothesDataBase.Instance.clothesConfigs;
+        var contentTransform = ScheContent.transform;
+            for (int i = 0; i < contentTransform.childCount - 1; i++)
+            {
+                var itemCom = contentTransform.GetChild(i).gameObject.GetComponent<ClothesSchetItem>();
+                var status = CurSche.NOSec;
+                if (i + 1 == curindex)
+                {
+                    status = CurSche.CurSec;
+                }
+                else if (i + 1 < curindex)
+                {
+                    status = CurSche.FinishSec;
+                }
+                itemCom.SetInfo(ItemList[i], status);
+                //DestroyImmediate(child);
+            }
         for (int i = 0; i < ItemList.Count; i++)
         {
-            var item = Instantiate(ScheItem, ScheContent.transform);
-            var itemCom = item.GetComponent<ClothesSchetItem>();
+            ClothesSchetItem itemCom;
+            if (contentTransform.childCount != ItemList.Count)
+            {
+                var item = Instantiate(ScheItem, ScheContent.transform);
+                itemCom = item.GetComponent<ClothesSchetItem>();
+            }
+            else
+            {
+                itemCom = contentTransform.GetChild(i).gameObject.GetComponent<ClothesSchetItem>();
+            }
             var status = CurSche.NOSec;
-             if (i == curindex)
+             if (i+1 == curindex)
             {
                 status = CurSche.CurSec;
             }
-            else if (i < curindex)
+            else if (i+1 < curindex)
             {
                 status = CurSche.FinishSec;
             }
@@ -88,41 +124,50 @@ public class ClothesCurSelPanel : MonoBehaviour
         }
     }
 
-    private void RefreshScheList()
+    private void RefershSelectItemList()
     {
         //1.根据进度和是否选择做表现，如果有物品就不进行加载，没有进行加载，
         //2.刷新列表当中的表现具体item为ClothesSchetItem，根据进度CurSelectIndex来进行调用SetStatus，进度小于循环i就是1，等于就是2，小于就是3
         var curindex = ClothesMain.CurSelectIndex;
         var ItemList = ClothesDataBase.Instance.allClothes.FindAll(c => c.type == (ClothesType)curindex);
+        if (SelectItemContent != null)
+        {
+            var contentTransform = SelectItemContent.transform;
+            for (int i = contentTransform.childCount - 1; i >= 0; i--)
+            {
+                var child = contentTransform.GetChild(i).gameObject;
+                DestroyImmediate(child);
+            }
+        }
         for (int i = 0; i < ItemList.Count; i++)
         {
             var item = Instantiate(SelectItem, SelectItemContent.transform);
             var itemCom = item.GetComponent<ClothesSeltem>();
             itemCom.SetIcon(ItemList[i]);
-            var btn = itemCom.CgClothesBtn;
-            btn?.onClick.AddListener(() => ItemOnClick(ItemList[i]));
+            
         }
     }
 
     private void ItemOnClick(ClothesItem item)
     {
         //1.出现星星特效，具体需求是我会根据具体的物体type然后去调用CharacterDressUp中的ChangeClothes方法
-        RightBtn.gameObject.SetActive(true);
-        LeftBtn.gameObject.SetActive(true);
-        var image = Resources.Load<Sprite>(item.Icon);
-        CharacterDressUp.Instance.ChangeClothes(item.type, image);
-        if(ClothesMain.CurSelectIndex>= ClothesDataBase.Instance.clothesConfigs.Count)
-        {
-            TakePhotoProgress();
-        }
+        //RightBtn.gameObject.SetActive(true);
+        //LeftBtn.gameObject.SetActive(true);
+        //var image = Resources.Load<Sprite>(item.Icon);
+        //CharacterDressUp.Instance.ChangeClothes(item.type, image);
+        //if(ClothesMain.CurSelectIndex>= ClothesDataBase.Instance.clothesConfigs.Count)
+        //{
+        //    TakePhotoProgress();
+        //}
     }
     private void ChangeCurScheBtn(bool bIsNext)
     {
-        if (bIsNext)
+
+        if (bIsNext && ClothesMain.CurSelectIndex <= ClothesDataBase.Instance.clothesConfigs.Count)
         {
             ClothesMain.CurSelectIndex++;
         }
-        else 
+        else if(ClothesMain.CurSelectIndex>=0)
         {
             ClothesMain.CurSelectIndex--;
         }
@@ -153,7 +198,7 @@ public class ClothesCurSelPanel : MonoBehaviour
     }
 
     //拍照进度
-    private void TakePhotoProgress()
+    public void TakePhotoProgress()
     {
         //进度list和展示list消失
         //出现画框和中间点击按钮

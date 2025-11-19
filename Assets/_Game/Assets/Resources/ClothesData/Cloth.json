@@ -1,0 +1,20 @@
+[
+  {
+    "idList": [101,102],
+    "Icon": "ClothesData/ClothesCloth",
+    "type":2,
+    "index":1
+  },
+  {
+    "idList": [103,104],
+    "Icon": "ClothesData/ClothesCloth",
+    "type":2,
+    "index":2
+  },
+  {
+    "idList": [105,106],
+    "Icon": "ClothesData/ClothesCloth",
+    "type":2,
+    "index":3
+  }
+]

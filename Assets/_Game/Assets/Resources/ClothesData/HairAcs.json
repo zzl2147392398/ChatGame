@@ -1,0 +1,14 @@
+[
+  {
+    "idList": [401],
+    "Icon": "ClothesData/ClothesHairAcs",
+    "type":3,
+    "index":1
+  },
+  {
+    "idList": [402],
+    "Icon": "ClothesData/ClothesHairAcs",
+    "type":3,
+    "index":2
+  }
+]

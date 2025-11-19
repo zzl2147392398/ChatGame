@@ -1,27 +1,22 @@
 [
   {
     "SeclectSeq": 1,
-    "SelectTableName": "",
-    "SelectIcon":""
+    "SelectTableName": "ClothesData/Hair",
+    "SelectIcon":"ClothesData/ClothesUI/hair"
   },
   {
     "SeclectSeq": 2,
-    "SelectTableName": "",
-    "SelectIcon":""
+    "SelectTableName": "ClothesData/Cloth",
+    "SelectIcon":"ClothesData/ClothesUI/clothes"
   },
   {
     "SeclectSeq": 3,
-    "SelectTableName": "",
-    "SelectIcon":""
+    "SelectTableName": "ClothesData/HairAcs",
+    "SelectIcon":"ClothesData/ClothesUI/headwear"
   },
   {
     "SeclectSeq": 4,
-    "SelectTableName": "",
-    "SelectIcon":""
-  },
-  {
-    "SeclectSeq": 5,
-    "SelectTableName": "",
-    "SelectIcon":""
+    "SelectTableName": "ClothesData/ClothesBg",
+    "SelectIcon":"ClothesData/ClothesUI/cane"
   }
 ]

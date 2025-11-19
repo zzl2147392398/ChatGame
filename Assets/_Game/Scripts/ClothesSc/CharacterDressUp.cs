@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 // 人物分层结构
 public class CharacterDressUp : MonoBehaviour
@@ -24,11 +25,13 @@ public class CharacterDressUp : MonoBehaviour
     }
 
     [Header("身体部位")]
-    public SpriteRenderer hair;      // 头发层
-    public SpriteRenderer face;      // 脸部层
-    public SpriteRenderer cloth;      // 身体层
-    public SpriteRenderer shoes;     // 鞋子层
-    public SpriteRenderer accessories; // 配饰层
+    public Image BcBg;      // 背景层
+    public Image FrontCloth;      // 前衣层
+    public Image FrontHair;      // 前发层
+    public Image Face;      // 表情层
+    public Image Hair;     // 后发层
+    public Image Clothes; // 后衣层
+    public Image HairAcs;   // 配饰层
 
     private void Awake()
     {
@@ -44,25 +47,24 @@ public class CharacterDressUp : MonoBehaviour
     }
 
     // 换装方法
-    public void ChangeClothes(ClothesType type, Sprite newSprite)
+    public void ChangeClothes(ClothesType type, List<Sprite> newSprite)
     {
         //根据换装的类型获取中心点播放星星特效，星星特效怎么手搓一个？
         switch (type)
         {
-            case ClothesType.Hair:
-                hair.sprite = newSprite;
+            case ClothesType.BcBg:
+                BcBg.sprite = newSprite[1];
                 break;
-            case ClothesType.Face:
-                face.sprite = newSprite;
+            case ClothesType.Hair:
+                FrontHair.sprite = newSprite[1];
+                Hair.sprite = newSprite[0];
                 break;
             case ClothesType.Clothes:
-                cloth.sprite = newSprite;
+                FrontCloth.sprite = newSprite[1];
+                Clothes.sprite = newSprite[0];
                 break;
-            case ClothesType.Shoes:
-                shoes.sprite = newSprite;
-                break;
-            case ClothesType.Accessories:
-                accessories.sprite = newSprite;
+            case ClothesType.HairAcs:
+                HairAcs.sprite = newSprite[0];
                 break;
         }
     }

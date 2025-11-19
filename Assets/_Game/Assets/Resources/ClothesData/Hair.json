@@ -1,7 +1,20 @@
 [
   {
-    "id": 1,
-    "Icon": "",
-    "type":2
+    "idList":[1,2],
+    "Icon": "ClothesData/ClothesHair",
+    "type":1,
+    "index":1
+  },
+  {
+    "idList": [3,4],
+    "Icon": "ClothesData/ClothesHair",
+    "type":1,
+    "index":2
+  },
+  {
+    "idList": [5,6],
+    "Icon": "ClothesData/ClothesHair",
+    "type":1,
+    "index":3
   }
 ]

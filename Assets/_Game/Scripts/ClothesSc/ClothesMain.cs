@@ -2,36 +2,45 @@ using DG.Tweening;
 using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq; // æ·»åŠ æ­¤è¡Œ
 using UnityEngine;
 
 public class ClothesMain : MonoBehaviour
 {
-    //´¦ÀíÓÎÏ·½ø¶È
-    public static int CurSelectIndex = 1;
-    public Transform characterObj;
-    private float duration = 1f;
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½ï¿½
+    public static int CurSelectIndex = 0;
     public GameObject SelectPanel;
+    
     void LoadClothesDataFromJson()
     {
         ClothesDataBase.Instance.allClothes.Clear();
         TextAsset jsonText = Resources.Load<TextAsset>("ClothesData/ClothesList");
         if (jsonText == null)
         {
-            Debug.LogError("Î´ÕÒµ½ÁÄÌìÊı¾İÎÄ¼ş ClothesList.json");
+            Debug.LogError("Î´ï¿½Òµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ ClothesList.json");
             return;
         }
-        // ·´ĞòÁĞ»¯
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Ğ»ï¿½
         ClothesDataBase.Instance.clothesConfigs = JsonConvert.DeserializeObject<List<ClothesConfig>>(jsonText.text);
         for (int i = 0; i < ClothesDataBase.Instance.clothesConfigs.Count; i++)
         {
             jsonText = Resources.Load<TextAsset>(ClothesDataBase.Instance.clothesConfigs[i].SelectTableName);
             if (jsonText != null)
             {
-                Debug.Log("½øÀ´¿ªÊ¼²éÕÒ±í======"+ ClothesDataBase.Instance.clothesConfigs[i].SelectTableName);
+                Debug.Log("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ò±ï¿½======"+ ClothesDataBase.Instance.clothesConfigs[i].SelectTableName);
                 List<ClothesItem> ClothesItems = JsonConvert.DeserializeObject<List<ClothesItem>>(jsonText.text);
                 for (int j = 0; j < ClothesItems.Count; j++)
                 {
-                    ClothesDataBase.Instance.allClothes.Add(ClothesItems[i]);
+                    // æ£€æŸ¥æ˜¯å¦å·²å­˜åœ¨ç›¸åŒçš„æ•°æ®
+                    bool exists = ClothesDataBase.Instance.allClothes.Any(c => c.idList[0] == ClothesItems[j].idList[0] && c.type == ClothesItems[j].type);
+                    if (!exists)
+                    {
+                        ClothesDataBase.Instance.allClothes.Add(ClothesItems[j]);
+                    }
+                    else
+                    {
+                        Debug.Log($"å·²å­˜åœ¨ç›¸åŒæ•°æ®ï¼Œè·³è¿‡æ·»åŠ : id={ClothesItems[j].idList[0]}, type={ClothesItems[j].type}");
+                    }
                 }
                
             }
@@ -40,23 +49,19 @@ public class ClothesMain : MonoBehaviour
         //{
         //    chatInfoDic[group.NPCID] = group;
         //}
-        //tarsche = chatInfoDic.Count; // ¸üĞÂ×Ü¿¨ÅÆÊı
+        //tarsche = chatInfoDic.Count; // ï¿½ï¿½ï¿½ï¿½ï¿½Ü¿ï¿½ï¿½ï¿½ï¿½ï¿½
     }
     // Start is called before the first frame update
     void Start()
     {
         LoadClothesDataFromJson();
-        characterObj = GameObject.Find("Body").transform;
+        CurSelectIndex = 0;
         SelectPanel.SetActive(true);
-        //1,´´½¨Êı¾İ
-        //2,³õÊ¼»­½ÇÉ«×°°ç
-        //3,ÏÔÊ¾½ÇÉ«³ö³¡¶¯»­
-        // ½ÇÉ«¶¯Ğ§
-        var endscale = characterObj.localScale;
-        characterObj.localScale =new Vector3(characterObj.localScale.x*2,characterObj.localScale.y*2,1);// Vector3.one * 2f;
-        Sequence seq = DOTween.Sequence();
-        seq.Append(characterObj.DOScale(endscale, duration).SetEase(Ease.OutBack))
-           .Append(characterObj.DOMoveY(0, duration));
+        //1,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        //2,ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½É«×°ï¿½ï¿½
+        //3,ï¿½ï¿½Ê¾ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        // ï¿½ï¿½É«ï¿½ï¿½Ğ§
+        
     }
 
     // Update is called once per frame
